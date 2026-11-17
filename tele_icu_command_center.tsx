@@ -174,6 +174,7 @@ export default function TeleICUDashboard() {
     patient: Patient | null;
   }>({ isOpen: false, type: null, patient: null });
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [seenPatients, setSeenPatients] = useState<Set<string>>(new Set());
 
   // 1. Calculate stats for the Top Navigation (Reduces Alarm Fatigue by providing summary)
   const stats = useMemo(() => {
@@ -212,6 +213,14 @@ export default function TeleICUDashboard() {
 
   const closeModal = () => {
     setModalState({ isOpen: false, type: null, patient: null });
+  };
+
+  const markPatientAsSeen = (patientId: string) => {
+    setSeenPatients(current => {
+      const next = new Set(current);
+      next.add(patientId);
+      return next;
+    });
   };
 
   return (
@@ -285,7 +294,9 @@ export default function TeleICUDashboard() {
               <PatientTile 
                 key={patient.id} 
                 patient={patient} 
+                isSeen={seenPatients.has(patient.id)}
                 onAction={handleAction} 
+                onMarkSeen={markPatientAsSeen}
               />
             ))}
           </div>
@@ -396,6 +407,14 @@ export default function TeleICUDashboard() {
                 >
                   Close
                 </button>
+                <button
+                  type="button"
+                  onClick={() => modalState.patient && markPatientAsSeen(modalState.patient.id)}
+                  disabled={seenPatients.has(modalState.patient.id)}
+                  className="w-full mt-3 py-3 px-4 bg-slate-900 hover:bg-slate-950 disabled:cursor-default disabled:text-slate-500 text-slate-300 border border-slate-700 rounded-xl font-medium transition-colors"
+                >
+                  {seenPatients.has(modalState.patient.id) ? 'Marked as Seen' : 'Mark as Seen'}
+                </button>
               </div>
             )}
 
@@ -447,9 +466,11 @@ export default function TeleICUDashboard() {
 // --- PATIENT TILE COMPONENT ---
 // Designed for "glanceability" and minimal clutter
 
-function PatientTile({ patient, onAction }: {
+function PatientTile({ patient, isSeen, onAction, onMarkSeen }: {
   patient: Patient;
+  isSeen: boolean;
   onAction: (type: 'call' | 'details', patient: Patient) => void;
+  onMarkSeen: (patientId: string) => void;
 }) {
   // Determine styling based on status
   const theme = {
@@ -489,19 +510,23 @@ function PatientTile({ patient, onAction }: {
     return 'text-slate-200';
   };
 
+  const tileBorder = isSeen ? 'border-slate-600' : theme.border;
+  const tileBackground = isSeen ? 'bg-slate-800/75' : theme.bg;
+  const tileOpacity = isSeen ? 'opacity-75' : '';
+
   return (
-    <div className={`rounded-xl border ${theme.border} ${theme.bg} overflow-hidden shadow-sm transition-all hover:shadow-md flex flex-col`}>
+    <div className={`rounded-xl border ${tileBorder} ${tileBackground} ${tileOpacity} overflow-hidden shadow-sm transition-all hover:shadow-md flex flex-col`}>
       {/* Tile Header */}
-      <div className={`${theme.headerBg} p-4 sm:p-5 flex justify-between items-start gap-3 border-b border-slate-700/50`}>
+      <div className={`${isSeen ? 'bg-slate-800/60' : theme.headerBg} p-4 sm:p-5 flex justify-between items-start gap-3 border-b border-slate-700/50`}>
         <div>
           <h3 className="font-bold text-lg text-white leading-tight flex items-center gap-2">
             {patient.bed}
-            {patient.status === 'critical' && <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>}
+            {patient.status === 'critical' && !isSeen && <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>}
           </h3>
           <p className="text-sm text-slate-400 truncate max-w-[180px] mt-0.5">{patient.name}, {patient.age}</p>
         </div>
         <div className="flex items-center gap-2 p-1.5 bg-slate-900/40 rounded-lg">
-          {theme.icon}
+          {isSeen ? <CheckCircle size={20} className="text-slate-400" /> : theme.icon}
         </div>
       </div>
 
@@ -581,20 +606,29 @@ function PatientTile({ patient, onAction }: {
       </div>
 
       {/* Action Footer */}
-      <div className="p-3 sm:p-5 pt-0 mt-auto flex gap-2 sm:gap-3">
+      <div className="p-3 sm:p-5 pt-0 mt-auto flex flex-wrap gap-2 sm:gap-3">
         <button 
           onClick={() => onAction('details', patient)}
-          className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 px-2 sm:px-3 rounded-lg bg-slate-900/40 hover:bg-slate-700 border border-slate-700/50 text-slate-300 text-xs sm:text-sm font-medium transition-all"
+          className="min-w-[calc(50%-0.25rem)] flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 px-2 sm:px-3 rounded-lg bg-slate-900/40 hover:bg-slate-700 border border-slate-700/50 text-slate-300 text-xs sm:text-sm font-medium transition-all"
         >
           <Info size={16} />
           Details
         </button>
         <button 
           onClick={() => onAction('call', patient)}
-          className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 px-2 sm:px-3 rounded-lg bg-slate-900/40 hover:bg-slate-700 border border-slate-700/50 text-slate-300 text-xs sm:text-sm font-medium transition-all"
+          className="min-w-[calc(50%-0.25rem)] flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 px-2 sm:px-3 rounded-lg bg-slate-900/40 hover:bg-slate-700 border border-slate-700/50 text-slate-300 text-xs sm:text-sm font-medium transition-all"
         >
           <PhoneCall size={16} />
           Call Bed
+        </button>
+        <button
+          type="button"
+          onClick={() => onMarkSeen(patient.id)}
+          disabled={isSeen}
+          className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-900/40 hover:bg-slate-700 disabled:cursor-default disabled:text-slate-500 border border-slate-700/50 text-slate-300 text-xs sm:text-sm font-medium transition-all"
+        >
+          <CheckCircle size={16} />
+          {isSeen ? 'Seen' : 'Mark as Seen'}
         </button>
       </div>
     </div>
