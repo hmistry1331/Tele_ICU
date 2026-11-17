@@ -217,42 +217,42 @@ export default function TeleICUDashboard() {
     <div className="min-h-screen bg-slate-900 text-slate-200 font-sans selection:bg-cyan-900">
       
       {/* --- TOP NAVIGATION BAR --- */}
-      <header className="sticky top-0 z-10 bg-slate-800 border-b border-slate-700 shadow-md px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-10 bg-slate-800 border-b border-slate-700 shadow-md px-3 py-3 sm:px-6 sm:py-4 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <div className="p-2 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
-            <Activity className="text-cyan-400" size={28} />
+            <Activity className="text-cyan-400" size={24} />
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-white tracking-tight">Tele-ICU Matrix</h1>
-            <p className="text-xs text-slate-400">Dr. Meera Shah • Night Shift • 5 Hospitals</p>
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">Tele-ICU Matrix</h1>
+            <p className="text-xs text-slate-400 truncate">Dr. Meera Shah • Night Shift • 5 Hospitals</p>
           </div>
         </div>
 
         {/* Filter Controls / Summary Counters */}
-        <div className="flex bg-slate-900 p-1.5 rounded-xl border border-slate-700 shadow-inner">
+        <div className="flex w-full md:w-auto max-w-full overflow-x-auto bg-slate-900 p-1 rounded-xl border border-slate-700 shadow-inner">
           <button 
             onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'all' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+            className={`shrink-0 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${filter === 'all' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
           >
             All ({stats.all})
           </button>
           <button 
             onClick={() => setFilter('critical')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${filter === 'critical' ? 'bg-rose-500/20 text-rose-400 shadow-sm' : 'text-slate-400 hover:text-rose-400 hover:bg-slate-800'}`}
+            className={`shrink-0 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-2 ${filter === 'critical' ? 'bg-rose-500/20 text-rose-400 shadow-sm' : 'text-slate-400 hover:text-rose-400 hover:bg-slate-800'}`}
           >
             <BellRing size={14} className={filter === 'critical' ? 'animate-pulse' : ''} />
             Critical ({stats.critical})
           </button>
           <button 
             onClick={() => setFilter('warning')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${filter === 'warning' ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800'}`}
+            className={`shrink-0 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-2 ${filter === 'warning' ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800'}`}
           >
             <AlertTriangle size={14} />
             Warning ({stats.warning})
           </button>
           <button 
             onClick={() => setFilter('stable')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${filter === 'stable' ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : 'text-slate-400 hover:text-emerald-400 hover:bg-slate-800'}`}
+            className={`shrink-0 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-2 ${filter === 'stable' ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : 'text-slate-400 hover:text-emerald-400 hover:bg-slate-800'}`}
           >
             <CheckCircle size={14} />
             Stable ({stats.stable})
@@ -261,7 +261,7 @@ export default function TeleICUDashboard() {
       </header>
 
       {/* --- MAIN MATRIX GRID --- */}
-      <main className="p-6 max-w-[1600px] mx-auto">
+      <main className="p-3 sm:p-6 max-w-[1600px] mx-auto">
         {sortedAndFilteredPatients.length === 0 ? (
           <div className="text-center py-20 text-slate-500">
             <CheckCircle size={48} className="mx-auto mb-4 opacity-50" />
@@ -283,7 +283,7 @@ export default function TeleICUDashboard() {
       {/* --- ACTION MODAL (Feedback Layer) --- */}
       {modalState.isOpen && modalState.patient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm transition-opacity">
-          <div className="bg-slate-800 border border-slate-600 rounded-2xl shadow-2xl max-w-2xl w-full p-8 relative animate-in fade-in zoom-in duration-200">
+          <div className="bg-slate-800 border border-slate-600 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[calc(100vh-2rem)] overflow-y-auto p-4 sm:p-8 relative animate-in fade-in zoom-in duration-200">
             <button 
               onClick={closeModal}
               className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors p-1"
@@ -317,13 +317,13 @@ export default function TeleICUDashboard() {
                 </div>
                 
                 <div className="space-y-4">
-                  <div className="bg-slate-900 p-5 rounded-xl border border-slate-700/50 flex justify-between items-center">
+                  <div className="bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-700/50 flex flex-col sm:flex-row gap-4 justify-between sm:items-center">
                     <div>
                       <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2">Patient Info</p>
                       <p className="text-white font-medium text-lg">{modalState.patient.name}, {modalState.patient.age} yrs</p>
                       <p className="text-slate-400 text-sm mt-1">{modalState.patient.id} • {modalState.patient.hospital}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left sm:text-right">
                       <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2">Current Status</p>
                       <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide
                         ${modalState.patient.status === 'critical' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 
@@ -336,9 +336,9 @@ export default function TeleICUDashboard() {
                   
                   {/* Detailed Vitals Graph */}
                   <div className="bg-slate-900 p-5 rounded-xl border border-slate-700/50">
-                    <div className="flex justify-between items-center mb-4">
+                    <div className="flex flex-col sm:flex-row gap-3 justify-between sm:items-center mb-4">
                       <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Vitals Trend (Last 5 Hours)</p>
-                      <div className="flex gap-4 text-xs font-medium">
+                      <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs font-medium">
                         <span className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-rose-400 rounded-full"></div> Heart Rate</span>
                         <span className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-cyan-400 rounded-full"></div> SpO2 %</span>
                       </div>
@@ -421,7 +421,7 @@ function PatientTile({ patient, onAction }: {
   return (
     <div className={`rounded-xl border ${theme.border} ${theme.bg} overflow-hidden shadow-sm transition-all hover:shadow-md flex flex-col`}>
       {/* Tile Header */}
-      <div className={`${theme.headerBg} p-5 flex justify-between items-start border-b border-slate-700/50`}>
+      <div className={`${theme.headerBg} p-4 sm:p-5 flex justify-between items-start gap-3 border-b border-slate-700/50`}>
         <div>
           <h3 className="font-bold text-lg text-white leading-tight flex items-center gap-2">
             {patient.bed}
@@ -435,15 +435,15 @@ function PatientTile({ patient, onAction }: {
       </div>
 
       {/* Vitals Body */}
-      <div className="p-5 grid grid-cols-3 gap-3 flex-grow">
+      <div className="p-3 sm:p-5 grid grid-cols-3 gap-2 sm:gap-3 flex-grow">
         
         {/* Heart Rate */}
-        <div className="bg-slate-900/50 rounded-lg p-3 flex flex-col items-center justify-center text-center border border-slate-700/30">
+        <div className="bg-slate-900/50 rounded-lg p-2 sm:p-3 flex flex-col items-center justify-center text-center border border-slate-700/30">
           <div className="flex items-center gap-1.5 text-slate-400 text-xs font-medium mb-1 uppercase tracking-wider">
             <Heart size={14} className="text-slate-500" /> HR
           </div>
           <div className="flex items-center gap-1.5">
-            <span className={`text-2xl font-bold tracking-tight ${getVitalColor(patient.vitals.hr.limit)}`}>
+            <span className={`text-xl sm:text-2xl font-bold tracking-tight ${getVitalColor(patient.vitals.hr.limit)}`}>
               {patient.vitals.hr.value}
             </span>
             <TrendIcon trend={patient.vitals.hr.trend} />
@@ -451,12 +451,12 @@ function PatientTile({ patient, onAction }: {
         </div>
 
         {/* Blood Pressure */}
-        <div className="bg-slate-900/50 rounded-lg p-3 flex flex-col items-center justify-center text-center border border-slate-700/30">
+        <div className="bg-slate-900/50 rounded-lg p-2 sm:p-3 flex flex-col items-center justify-center text-center border border-slate-700/30">
           <div className="flex items-center gap-1.5 text-slate-400 text-xs font-medium mb-1 uppercase tracking-wider">
             <Droplets size={14} className="text-slate-500" /> BP
           </div>
           <div className="flex items-center gap-1.5">
-            <span className={`text-lg font-bold tracking-tight ${getVitalColor(patient.vitals.bp.limit)}`}>
+            <span className={`text-base sm:text-lg font-bold tracking-tight ${getVitalColor(patient.vitals.bp.limit)}`}>
               {patient.vitals.bp.value}
             </span>
             <TrendIcon trend={patient.vitals.bp.trend} />
@@ -464,12 +464,12 @@ function PatientTile({ patient, onAction }: {
         </div>
 
         {/* SpO2 */}
-        <div className="bg-slate-900/50 rounded-lg p-3 flex flex-col items-center justify-center text-center border border-slate-700/30">
+        <div className="bg-slate-900/50 rounded-lg p-2 sm:p-3 flex flex-col items-center justify-center text-center border border-slate-700/30">
           <div className="flex items-center gap-1.5 text-slate-400 text-xs font-medium mb-1 uppercase tracking-wider">
             <Wind size={14} className="text-slate-500" /> SpO2
           </div>
           <div className="flex items-center gap-1.5">
-            <span className={`text-2xl font-bold tracking-tight flex items-baseline ${getVitalColor(patient.vitals.spo2.limit)}`}>
+            <span className={`text-xl sm:text-2xl font-bold tracking-tight flex items-baseline ${getVitalColor(patient.vitals.spo2.limit)}`}>
               {patient.vitals.spo2.value}<span className="text-sm ml-0.5 opacity-60">%</span>
             </span>
             <TrendIcon trend={patient.vitals.spo2.trend} />
@@ -479,7 +479,7 @@ function PatientTile({ patient, onAction }: {
       </div>
 
       {/* Mini Trend Sparkline */}
-      <div className="px-5 pb-4">
+      <div className="px-3 sm:px-5 pb-4">
         <div className="h-10 w-full opacity-80">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={patient.history}>
@@ -491,17 +491,17 @@ function PatientTile({ patient, onAction }: {
       </div>
 
       {/* Action Footer */}
-      <div className="p-5 pt-0 mt-auto flex gap-3">
+      <div className="p-3 sm:p-5 pt-0 mt-auto flex gap-2 sm:gap-3">
         <button 
           onClick={() => onAction('details', patient)}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-900/40 hover:bg-slate-700 border border-slate-700/50 text-slate-300 text-sm font-medium transition-all"
+          className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 px-2 sm:px-3 rounded-lg bg-slate-900/40 hover:bg-slate-700 border border-slate-700/50 text-slate-300 text-xs sm:text-sm font-medium transition-all"
         >
           <Info size={16} />
           Details
         </button>
         <button 
           onClick={() => onAction('call', patient)}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-900/40 hover:bg-slate-700 border border-slate-700/50 text-slate-300 text-sm font-medium transition-all"
+          className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 px-2 sm:px-3 rounded-lg bg-slate-900/40 hover:bg-slate-700 border border-slate-700/50 text-slate-300 text-xs sm:text-sm font-medium transition-all"
         >
           <PhoneCall size={16} />
           Call Bed
