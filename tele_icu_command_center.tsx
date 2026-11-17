@@ -2,11 +2,11 @@ import React, { useState, useMemo } from 'react';
 import { 
   Activity, PhoneCall, Info, AlertTriangle, 
   CheckCircle, TrendingUp, TrendingDown, Minus, 
-  Heart, Droplets, Wind, X, BellRing
+  Heart, Droplets, Wind, X, BellRing, WifiOff
 } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer, YAxis, XAxis, Tooltip } from 'recharts';
 
-type PatientStatus = 'critical' | 'warning' | 'stable';
+type PatientStatus = 'critical' | 'warning' | 'stable' | 'disconnected';
 type Trend = 'up' | 'down' | 'stable';
 type VitalLimit = 'high' | 'low' | 'normal';
 type Patient = {
@@ -99,7 +99,7 @@ const initialPatients: Patient[] = [
     notes: 'Stable on CPAP.'
   },
   {
-    id: 'PT-106', name: 'Linda Taylor', age: 62, hospital: 'Northway Clinic', bed: 'ICU-02', status: 'warning',
+    id: 'PT-106', name: 'Linda Taylor', age: 62, hospital: 'Northway Clinic', bed: 'ICU-02', status: 'disconnected',
     vitals: {
       hr: { value: 98, trend: 'up', limit: 'normal' },
       bp: { value: '100/65', trend: 'down', limit: 'normal' },
@@ -110,7 +110,7 @@ const initialPatients: Patient[] = [
       { time: '04:00', hr: 92, spo2: 92 }, { time: '05:00', hr: 95, spo2: 91 }, 
       { time: '06:00', hr: 98, spo2: 90 }
     ],
-    notes: 'Pneumonia, oxygen requirement increasing.'
+    notes: 'Connection Lost'
   },
   {
     id: 'PT-107', name: 'William Brown', age: 54, hospital: 'Eastside Health', bed: 'ICU-05', status: 'stable',
@@ -173,13 +173,14 @@ export default function TeleICUDashboard() {
     type: 'call' | 'details' | null;
     patient: Patient | null;
   }>({ isOpen: false, type: null, patient: null });
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   // 1. Calculate stats for the Top Navigation (Reduces Alarm Fatigue by providing summary)
   const stats = useMemo(() => {
     return {
       all: initialPatients.length,
       critical: initialPatients.filter(p => p.status === 'critical').length,
-      warning: initialPatients.filter(p => p.status === 'warning').length,
+      warning: initialPatients.filter(p => p.status === 'warning' || p.status === 'disconnected').length,
       stable: initialPatients.filter(p => p.status === 'stable').length,
     };
   }, []);
@@ -188,11 +189,11 @@ export default function TeleICUDashboard() {
   const sortedAndFilteredPatients = useMemo(() => {
     let filtered = initialPatients;
     if (filter !== 'all') {
-      filtered = initialPatients.filter(p => p.status === filter);
+      filtered = initialPatients.filter(p => p.status === filter || (filter === 'warning' && p.status === 'disconnected'));
     }
     
     // Sort logic: Critical (3) > Warning (2) > Stable (1)
-    const statusWeight: Record<PatientStatus, number> = { critical: 3, warning: 2, stable: 1 };
+    const statusWeight: Record<PatientStatus, number> = { critical: 3, warning: 2, disconnected: 2, stable: 1 };
     
     return filtered.sort((a, b) => {
       // Primary sort by status weight (descending)
@@ -228,34 +229,45 @@ export default function TeleICUDashboard() {
           </div>
         </div>
 
-        {/* Filter Controls / Summary Counters */}
-        <div className="flex w-full md:w-auto max-w-full overflow-x-auto bg-slate-900 p-1 rounded-xl border border-slate-700 shadow-inner">
-          <button 
-            onClick={() => setFilter('all')}
-            className={`shrink-0 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${filter === 'all' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+        <div className="flex w-full md:w-auto max-w-full items-center gap-2">
+          {/* Filter Controls / Summary Counters */}
+          <div className="flex min-w-0 flex-1 md:flex-none overflow-x-auto bg-slate-900 p-1 rounded-xl border border-slate-700 shadow-inner">
+            <button
+              onClick={() => setFilter('all')}
+              className={`shrink-0 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${filter === 'all' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+            >
+              All ({stats.all})
+            </button>
+            <button
+              onClick={() => setFilter('critical')}
+              className={`shrink-0 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-2 ${filter === 'critical' ? 'bg-rose-500/20 text-rose-400 shadow-sm' : 'text-slate-400 hover:text-rose-400 hover:bg-slate-800'}`}
+            >
+              <BellRing size={14} className={filter === 'critical' ? 'animate-pulse' : ''} />
+              Critical ({stats.critical})
+            </button>
+            <button
+              onClick={() => setFilter('warning')}
+              className={`shrink-0 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-2 ${filter === 'warning' ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800'}`}
+            >
+              <AlertTriangle size={14} />
+              Warning ({stats.warning})
+            </button>
+            <button
+              onClick={() => setFilter('stable')}
+              className={`shrink-0 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-2 ${filter === 'stable' ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : 'text-slate-400 hover:text-emerald-400 hover:bg-slate-800'}`}
+            >
+              <CheckCircle size={14} />
+              Stable ({stats.stable})
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsHelpOpen(true)}
+            aria-label="Open help"
+            title="Help"
+            className="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 text-sm font-bold text-slate-400 transition-colors hover:border-slate-500 hover:bg-slate-700 hover:text-white"
           >
-            All ({stats.all})
-          </button>
-          <button 
-            onClick={() => setFilter('critical')}
-            className={`shrink-0 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-2 ${filter === 'critical' ? 'bg-rose-500/20 text-rose-400 shadow-sm' : 'text-slate-400 hover:text-rose-400 hover:bg-slate-800'}`}
-          >
-            <BellRing size={14} className={filter === 'critical' ? 'animate-pulse' : ''} />
-            Critical ({stats.critical})
-          </button>
-          <button 
-            onClick={() => setFilter('warning')}
-            className={`shrink-0 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-2 ${filter === 'warning' ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800'}`}
-          >
-            <AlertTriangle size={14} />
-            Warning ({stats.warning})
-          </button>
-          <button 
-            onClick={() => setFilter('stable')}
-            className={`shrink-0 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-2 ${filter === 'stable' ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : 'text-slate-400 hover:text-emerald-400 hover:bg-slate-800'}`}
-          >
-            <CheckCircle size={14} />
-            Stable ({stats.stable})
+            ?
           </button>
         </div>
       </header>
@@ -327,7 +339,7 @@ export default function TeleICUDashboard() {
                       <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2">Current Status</p>
                       <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide
                         ${modalState.patient.status === 'critical' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 
-                          modalState.patient.status === 'warning' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 
+                          modalState.patient.status === 'warning' || modalState.patient.status === 'disconnected' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
                           'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
                         {modalState.patient.status}
                       </span>
@@ -336,27 +348,77 @@ export default function TeleICUDashboard() {
                   
                   {/* Detailed Vitals Graph */}
                   <div className="bg-slate-900 p-5 rounded-xl border border-slate-700/50">
-                    <div className="flex flex-col sm:flex-row gap-3 justify-between sm:items-center mb-4">
-                      <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Vitals Trend (Last 5 Hours)</p>
-                      <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs font-medium">
-                        <span className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-rose-400 rounded-full"></div> Heart Rate</span>
-                        <span className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-cyan-400 rounded-full"></div> SpO2 %</span>
+                    {modalState.patient.status === 'disconnected' ? (
+                      <div className="h-48 flex flex-col items-center justify-center gap-4 text-slate-500">
+                        <div className="w-full border-t-2 border-dashed border-slate-600" />
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <WifiOff size={18} />
+                          Signal Lost
+                        </div>
                       </div>
-                    </div>
-                    <div className="h-48 w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={modalState.patient.history} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
-                          <XAxis dataKey="time" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                          <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} domain={['dataMin - 10', 'dataMax + 10']} />
-                          <Tooltip 
-                            contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '0.5rem', color: '#f8fafc' }}
-                            itemStyle={{ fontWeight: 500 }}
-                          />
-                          <Line type="monotone" name="Heart Rate" dataKey="hr" stroke="#fb7185" strokeWidth={2.5} dot={{ r: 4, fill: '#fb7185', strokeWidth: 0 }} activeDot={{ r: 6 }} />
-                          <Line type="monotone" name="SpO2 %" dataKey="spo2" stroke="#22d3ee" strokeWidth={2.5} dot={{ r: 4, fill: '#22d3ee', strokeWidth: 0 }} activeDot={{ r: 6 }} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
+                    ) : (
+                      <>
+                        <div className="flex flex-col sm:flex-row gap-3 justify-between sm:items-center mb-4">
+                          <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Vitals Trend (Last 5 Hours)</p>
+                          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs font-medium">
+                            <span className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-rose-400 rounded-full"></div> Heart Rate</span>
+                            <span className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-cyan-400 rounded-full"></div> SpO2 %</span>
+                          </div>
+                        </div>
+                        <div className="h-48 w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={modalState.patient.history} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                              <XAxis dataKey="time" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                              <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} domain={['dataMin - 10', 'dataMax + 10']} />
+                              <Tooltip
+                                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '0.5rem', color: '#f8fafc' }}
+                                itemStyle={{ fontWeight: 500 }}
+                              />
+                              <Line type="monotone" name="Heart Rate" dataKey="hr" stroke="#fb7185" strokeWidth={2.5} dot={{ r: 4, fill: '#fb7185', strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                              <Line type="monotone" name="SpO2 %" dataKey="spo2" stroke="#22d3ee" strokeWidth={2.5} dot={{ r: 4, fill: '#22d3ee', strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </>
+                    )}
+
+                    {isHelpOpen && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+                        <div
+                          role="dialog"
+                          aria-modal="true"
+                          aria-labelledby="help-title"
+                          className="relative w-full max-w-md rounded-2xl border border-slate-600 bg-slate-800 p-6 shadow-2xl"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setIsHelpOpen(false)}
+                            aria-label="Close help"
+                            className="absolute right-4 top-4 p-1 text-slate-400 transition-colors hover:text-white"
+                          >
+                            <X size={20} />
+                          </button>
+                          <h2 id="help-title" className="mb-5 text-xl font-bold text-white">Quick Reference</h2>
+                          <div className="space-y-4 text-sm">
+                            <div className="flex items-center gap-3">
+                              <span className="h-3 w-3 rounded-full bg-rose-400" />
+                              <p className="text-slate-300"><span className="font-semibold text-rose-400">Red</span> = Critical</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="h-3 w-3 rounded-full bg-amber-400" />
+                              <p className="text-slate-300"><span className="font-semibold text-amber-400">Yellow</span> = Warning</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="h-3 w-3 rounded-full bg-slate-400" />
+                              <p className="text-slate-300"><span className="font-semibold text-slate-200">Gray</span> = Disconnected</p>
+                            </div>
+                            <p className="border-t border-slate-700 pt-4 leading-relaxed text-slate-400">
+                              Read the patient graphs from left to right: rising or falling lines show how vitals are changing over time.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="bg-slate-900 p-5 rounded-xl border border-slate-700/50">
@@ -409,6 +471,13 @@ function PatientTile({ patient, onAction }: {
       headerBg: 'bg-slate-800',
       text: 'text-emerald-400',
       icon: <CheckCircle size={20} className="text-emerald-500/70" />
+    },
+    disconnected: {
+      border: 'border-slate-600',
+      bg: 'bg-slate-700/80',
+      headerBg: 'bg-slate-700',
+      text: 'text-slate-300',
+      icon: <WifiOff size={20} className="text-slate-300" />
     }
   }[patient.status];
 
@@ -442,12 +511,16 @@ function PatientTile({ patient, onAction }: {
           <div className="flex items-center gap-1.5 text-slate-400 text-xs font-medium mb-1 uppercase tracking-wider">
             <Heart size={14} className="text-slate-500" /> HR
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className={`text-xl sm:text-2xl font-bold tracking-tight ${getVitalColor(patient.vitals.hr.limit)}`}>
-              {patient.vitals.hr.value}
-            </span>
-            <TrendIcon trend={patient.vitals.hr.trend} />
-          </div>
+          {patient.status === 'disconnected' ? (
+            <WifiOff size={22} className="text-slate-400" aria-label="No signal" />
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <span className={`text-xl sm:text-2xl font-bold tracking-tight ${getVitalColor(patient.vitals.hr.limit)}`}>
+                {patient.vitals.hr.value}
+              </span>
+              <TrendIcon trend={patient.vitals.hr.trend} />
+            </div>
+          )}
         </div>
 
         {/* Blood Pressure */}
@@ -455,12 +528,16 @@ function PatientTile({ patient, onAction }: {
           <div className="flex items-center gap-1.5 text-slate-400 text-xs font-medium mb-1 uppercase tracking-wider">
             <Droplets size={14} className="text-slate-500" /> BP
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className={`text-base sm:text-lg font-bold tracking-tight ${getVitalColor(patient.vitals.bp.limit)}`}>
-              {patient.vitals.bp.value}
-            </span>
-            <TrendIcon trend={patient.vitals.bp.trend} />
-          </div>
+          {patient.status === 'disconnected' ? (
+            <WifiOff size={22} className="text-slate-400" aria-label="No signal" />
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <span className={`text-base sm:text-lg font-bold tracking-tight ${getVitalColor(patient.vitals.bp.limit)}`}>
+                {patient.vitals.bp.value}
+              </span>
+              <TrendIcon trend={patient.vitals.bp.trend} />
+            </div>
+          )}
         </div>
 
         {/* SpO2 */}
@@ -468,26 +545,37 @@ function PatientTile({ patient, onAction }: {
           <div className="flex items-center gap-1.5 text-slate-400 text-xs font-medium mb-1 uppercase tracking-wider">
             <Wind size={14} className="text-slate-500" /> SpO2
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className={`text-xl sm:text-2xl font-bold tracking-tight flex items-baseline ${getVitalColor(patient.vitals.spo2.limit)}`}>
-              {patient.vitals.spo2.value}<span className="text-sm ml-0.5 opacity-60">%</span>
-            </span>
-            <TrendIcon trend={patient.vitals.spo2.trend} />
-          </div>
+          {patient.status === 'disconnected' ? (
+            <WifiOff size={22} className="text-slate-400" aria-label="No signal" />
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <span className={`text-xl sm:text-2xl font-bold tracking-tight flex items-baseline ${getVitalColor(patient.vitals.spo2.limit)}`}>
+                {patient.vitals.spo2.value}<span className="text-sm ml-0.5 opacity-60">%</span>
+              </span>
+              <TrendIcon trend={patient.vitals.spo2.trend} />
+            </div>
+          )}
         </div>
         
       </div>
 
       {/* Mini Trend Sparkline */}
       <div className="px-3 sm:px-5 pb-4">
-        <div className="h-10 w-full opacity-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={patient.history}>
-              <Line type="monotone" dataKey="hr" stroke="#fb7185" strokeWidth={2} dot={false} isAnimationActive={false} />
-              <Line type="monotone" dataKey="spo2" stroke="#22d3ee" strokeWidth={2} dot={false} isAnimationActive={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        {patient.status === 'disconnected' ? (
+          <div className="h-10 flex flex-col items-center justify-center gap-2 text-xs font-medium text-slate-400">
+            <div className="w-full border-t-2 border-dashed border-slate-500" />
+            <span className="flex items-center gap-1.5"><WifiOff size={14} /> Signal Lost</span>
+          </div>
+        ) : (
+          <div className="h-10 w-full opacity-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={patient.history}>
+                <Line type="monotone" dataKey="hr" stroke="#fb7185" strokeWidth={2} dot={false} isAnimationActive={false} />
+                <Line type="monotone" dataKey="spo2" stroke="#22d3ee" strokeWidth={2} dot={false} isAnimationActive={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
       {/* Action Footer */}
