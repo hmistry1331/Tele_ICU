@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { 
   Activity, PhoneCall, Info, AlertTriangle, 
   CheckCircle, TrendingUp, TrendingDown, Minus, 
@@ -175,6 +175,14 @@ export default function TeleICUDashboard() {
   }>({ isOpen: false, type: null, patient: null });
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [seenPatients, setSeenPatients] = useState<Set<string>>(new Set());
+  const seenTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  useEffect(() => {
+    return () => {
+      seenTimers.current.forEach(timer => clearTimeout(timer));
+      seenTimers.current.clear();
+    };
+  }, []);
 
   // 1. Calculate stats for the Top Navigation (Reduces Alarm Fatigue by providing summary)
   const stats = useMemo(() => {
@@ -197,6 +205,12 @@ export default function TeleICUDashboard() {
     const statusWeight: Record<PatientStatus, number> = { critical: 3, warning: 2, disconnected: 2, stable: 1 };
     
     return filtered.sort((a, b) => {
+      const aIsSeen = seenPatients.has(a.id);
+      const bIsSeen = seenPatients.has(b.id);
+      if (aIsSeen !== bIsSeen) {
+        return aIsSeen ? 1 : -1;
+      }
+
       // Primary sort by status weight (descending)
       if (statusWeight[a.status] !== statusWeight[b.status]) {
         return statusWeight[b.status] - statusWeight[a.status];
@@ -204,7 +218,7 @@ export default function TeleICUDashboard() {
       // Secondary sort by bed/id
       return a.id.localeCompare(b.id);
     });
-  }, [filter]);
+  }, [filter, seenPatients]);
 
   // Handlers for interactions (Showing feedback as required by prototyping phase)
   const handleAction = (type: 'call' | 'details', patient: Patient) => {
@@ -216,11 +230,31 @@ export default function TeleICUDashboard() {
   };
 
   const markPatientAsSeen = (patientId: string) => {
+    const patient = initialPatients.find(item => item.id === patientId);
+    if (!patient || patient.status === 'critical' || seenPatients.has(patientId)) {
+      return;
+    }
+
     setSeenPatients(current => {
       const next = new Set(current);
       next.add(patientId);
       return next;
     });
+
+    const existingTimer = seenTimers.current.get(patientId);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+    }
+
+    const timer = setTimeout(() => {
+      setSeenPatients(current => {
+        const next = new Set(current);
+        next.delete(patientId);
+        return next;
+      });
+      seenTimers.current.delete(patientId);
+    }, 60 * 60 * 1000);
+    seenTimers.current.set(patientId, timer);
   };
 
   return (
@@ -410,10 +444,11 @@ export default function TeleICUDashboard() {
                 <button
                   type="button"
                   onClick={() => modalState.patient && markPatientAsSeen(modalState.patient.id)}
-                  disabled={seenPatients.has(modalState.patient.id)}
+                  disabled={seenPatients.has(modalState.patient.id) || modalState.patient.status === 'critical'}
                   className="w-full mt-3 py-3 px-4 bg-slate-900 hover:bg-slate-950 disabled:cursor-default disabled:text-slate-500 text-slate-300 border border-slate-700 rounded-xl font-medium transition-colors"
                 >
-                  {seenPatients.has(modalState.patient.id) ? 'Marked as Seen' : 'Mark as Seen'}
+                  {modalState.patient.status === 'critical' ? 'Critical Alerts Cannot Be Snoozed' :
+                    seenPatients.has(modalState.patient.id) ? 'Snoozed for 60 Minutes' : 'Mark as Seen'}
                 </button>
               </div>
             )}
@@ -624,11 +659,11 @@ function PatientTile({ patient, isSeen, onAction, onMarkSeen }: {
         <button
           type="button"
           onClick={() => onMarkSeen(patient.id)}
-          disabled={isSeen}
+          disabled={isSeen || patient.status === 'critical'}
           className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-900/40 hover:bg-slate-700 disabled:cursor-default disabled:text-slate-500 border border-slate-700/50 text-slate-300 text-xs sm:text-sm font-medium transition-all"
         >
           <CheckCircle size={16} />
-          {isSeen ? 'Seen' : 'Mark as Seen'}
+          {patient.status === 'critical' ? 'Critical Alert' : isSeen ? 'Snoozed (60m)' : 'Mark as Seen'}
         </button>
       </div>
     </div>
