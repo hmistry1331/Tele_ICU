@@ -399,43 +399,44 @@ export default function TeleICUDashboard() {
               </div>
             )}
 
-            {isHelpOpen && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-                <div
-                  role="dialog"
-                  aria-modal="true"
-                  aria-labelledby="help-title"
-                  className="relative w-full max-w-md rounded-2xl border border-slate-600 bg-slate-800 p-6 shadow-2xl"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setIsHelpOpen(false)}
-                    aria-label="Close help"
-                    className="absolute right-4 top-4 p-1 text-slate-400 transition-colors hover:text-white"
-                  >
-                    <X size={20} />
-                  </button>
-                  <h2 id="help-title" className="mb-5 text-xl font-bold text-white">Quick Reference</h2>
-                  <div className="space-y-4 text-sm">
-                    <div className="flex items-center gap-3">
-                      <span className="h-3 w-3 rounded-full bg-rose-400" />
-                      <p className="text-slate-300"><span className="font-semibold text-rose-400">Red</span> = Critical</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="h-3 w-3 rounded-full bg-amber-400" />
-                      <p className="text-slate-300"><span className="font-semibold text-amber-400">Yellow</span> = Warning</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="h-3 w-3 rounded-full bg-slate-400" />
-                      <p className="text-slate-300"><span className="font-semibold text-slate-200">Gray</span> = Disconnected</p>
-                    </div>
-                    <p className="border-t border-slate-700 pt-4 leading-relaxed text-slate-400">
-                      Read the patient graphs from left to right: rising or falling lines show how vitals are changing over time.
-                    </p>
-                  </div>
-                </div>
+          </div>
+        </div>
+      )}
+
+      {isHelpOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="help-title"
+            className="relative w-full max-w-md rounded-2xl border border-slate-600 bg-slate-800 p-6 shadow-2xl"
+          >
+            <button
+              type="button"
+              onClick={() => setIsHelpOpen(false)}
+              aria-label="Close help"
+              className="absolute right-4 top-4 p-1 text-slate-400 transition-colors hover:text-white"
+            >
+              <X size={20} />
+            </button>
+            <h2 id="help-title" className="mb-5 text-xl font-bold text-white">Quick Reference</h2>
+            <div className="space-y-4 text-sm">
+              <div className="flex items-center gap-3">
+                <span className="h-3 w-3 rounded-full bg-rose-400" />
+                <p className="text-slate-300"><span className="font-semibold text-rose-400">Red</span> = Critical</p>
               </div>
-            )}
+              <div className="flex items-center gap-3">
+                <span className="h-3 w-3 rounded-full bg-amber-400" />
+                <p className="text-slate-300"><span className="font-semibold text-amber-400">Yellow</span> = Warning</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="h-3 w-3 rounded-full bg-slate-400" />
+                <p className="text-slate-300"><span className="font-semibold text-slate-200">Gray</span> = Disconnected</p>
+              </div>
+              <p className="border-t border-slate-700 pt-4 leading-relaxed text-slate-400">
+                Read the patient graphs from left to right: rising or falling lines show how vitals are changing over time.
+              </p>
+            </div>
           </div>
         </div>
       )}
